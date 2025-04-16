@@ -1,0 +1,192 @@
+{% extends 'base.html' %}
+
+{% block title %}Inventory Dashboard - Pharmacy Management System{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2">Inventory Dashboard</h1>
+        <div>
+            <a href="{% url 'drug_create' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Add New Drug
+            </a>
+            <a href="{% url 'purchase_create' %}" class="btn btn-success">
+                <i class="fas fa-cart-plus"></i> New Purchase
+            </a>
+        </div>
+    </div>
+    
+    <!-- Statistics Cards -->
+    <div class="row">
+        <!-- Total Drugs -->
+        <div class="col-md-3 mb-4">
+            <div class="card bg-primary text-white shadow card-dashboard">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-0">{{ total_drugs }}</h5>
+                            <div class="small">Total Drugs</div>
+                        </div>
+                        <div>
+                            <i class="fas fa-pills fa-2x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-primary-dark d-flex justify-content-between align-items-center">
+                    <a href="{% url 'drug_list' %}" class="small text-white">View Details</a>
+                    <i class="fas fa-arrow-circle-right"></i>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Categories -->
+        <div class="col-md-3 mb-4">
+            <div class="card bg-success text-white shadow card-dashboard">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-0">{{ total_categories }}</h5>
+                            <div class="small">Categories</div>
+                        </div>
+                        <div>
+                            <i class="fas fa-layer-group fa-2x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-success-dark d-flex justify-content-between align-items-center">
+                    <a href="{% url 'category_list' %}" class="small text-white">View Details</a>
+                    <i class="fas fa-arrow-circle-right"></i>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Suppliers -->
+        <div class="col-md-3 mb-4">
+            <div class="card bg-info text-white shadow card-dashboard">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-0">{{ total_suppliers }}</h5>
+                            <div class="small">Suppliers</div>
+                        </div>
+                        <div>
+                            <i class="fas fa-truck fa-2x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-info-dark d-flex justify-content-between align-items-center">
+                    <a href="{% url 'supplier_list' %}" class="small text-white">View Details</a>
+                    <i class="fas fa-arrow-circle-right"></i>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Alerts -->
+        <div class="col-md-3 mb-4">
+            <div class="card bg-danger text-white shadow card-dashboard">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-0">{{ low_stock_count }} / {{ expired_count }}</h5>
+                            <div class="small">Low Stock / Expired</div>
+                        </div>
+                        <div>
+                            <i class="fas fa-exclamation-triangle fa-2x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-danger-dark d-flex justify-content-between align-items-center">
+                    <a href="{% url 'stock_alerts' %}" class="small text-white">View Details</a>
+                    <i class="fas fa-arrow-circle-right"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Low Stock Table -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-danger">Low Stock Drugs</h6>
+                    <a href="{% url 'stock_alerts' %}" class="btn btn-sm btn-danger">View All</a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Drug Name</th>
+                                    <th>Current Stock</th>
+                                    <th>Reorder Level</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for drug in low_stock_drugs|slice:":5" %}
+                                <tr>
+                                    <td>{{ drug.name }}</td>
+                                    <td>{{ drug.quantity_in_stock }}</td>
+                                    <td>{{ drug.reorder_level }}</td>
+                                    <td>
+                                        <a href="{% url 'purchase_create' %}?drug={{ drug.id }}" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-cart-plus"></i> Purchase
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center py-3">No low stock drugs found</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Expired Drugs Table -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-danger">Expired Drugs</h6>
+                    <a href="{% url 'stock_alerts' %}" class="btn btn-sm btn-danger">View All</a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Drug Name</th>
+                                    <th>Expiry Date</th>
+                                    <th>Quantity</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for drug in expired_drugs|slice:":5" %}
+                                <tr>
+                                    <td>{{ drug.name }}</td>
+                                    <td class="text-danger">{{ drug.expiry_date }}</td>
+                                    <td>{{ drug.quantity_in_stock }}</td>
+                                    <td>
+                                        <a href="{% url 'adjustment_create' %}?drug={{ drug.id }}" class="btn btn-sm btn-warning">
+                                            <i class="fas fa-edit"></i> Adjust
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center py-3">No expired drugs found</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,523 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - Pharmacy Management System{% endblock %}
+
+{% block extra_css %}
+<style>
+    .formset-row {
+        border-bottom: 1px solid #eee;
+        padding: 15px 0;
+        transition: background-color 0.3s ease;
+    }
+    
+    .formset-row:last-child {
+        border-bottom: none;
+    }
+    
+    .formset-row:hover {
+        background-color: #f8f9fc;
+    }
+    
+    .delete-row {
+        color: #dc3545;
+        cursor: pointer;
+    }
+    
+    .add-row {
+        cursor: pointer;
+    }
+
+    /* Select2 Styling */
+    .select2-container--default .select2-results__option--highlighted[aria-selected] {
+        background-color: #4e73df;
+        color: white;
+    }
+
+    .select2-container--default .select2-selection--single {
+        height: 38px;
+        padding: 0.375rem 0.75rem;
+        font-size: 1rem;
+        border: 1px solid #d1d3e2;
+        border-radius: 0.35rem;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 36px;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: normal;
+        padding-left: 0;
+    }
+
+    /* Drug Search Results Styling */
+    .drug-result {
+        padding: 6px;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .drug-name {
+        font-weight: bold;
+    }
+
+    .drug-details {
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+
+    .text-danger {
+        color: #e74a3b !important;
+    }
+
+    .stock-info {
+        margin-top: 2px;
+        font-size: 0.8rem;
+        color: #5a5c69;
+    }
+
+    .item-price, .item-total {
+        font-weight: 500;
+    }
+
+    #grand-total {
+        font-weight: bold;
+        color: #4e73df;
+    }
+
+    .select2-container--default .select2-results__option.loading-results {
+        text-align: center;
+        padding: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'transaction_list' %}">Transactions</a></li>
+            <li class="breadcrumb-item active" aria-current="page">New Sale</li>
+        </ol>
+    </nav>
+    
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2">{{ title }}</h1>
+    </div>
+    
+    <form method="post" id="sale-form">
+        {% csrf_token %}
+        
+        <div class="row">
+            <div class="col-md-5">
+                <!-- Transaction Form -->
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">Transaction Details</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="{{ transaction_form.transaction_type.id_for_label }}" class="form-label">Transaction Type</label>
+                                {{ transaction_form.transaction_type }}
+                            </div>
+                            <div class="col-md-8">
+                                <label for="{{ transaction_form.transaction_date.id_for_label }}" class="form-label">Transaction Date</label>
+                                {{ transaction_form.transaction_date }}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ transaction_form.notes.id_for_label }}" class="form-label">Notes</label>
+                            {{ transaction_form.notes }}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Sale Form -->
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">Customer Information</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="{{ sale_form.customer_name.id_for_label }}" class="form-label">Customer Name</label>
+                            {{ sale_form.customer_name }}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ sale_form.customer_phone.id_for_label }}" class="form-label">Customer Phone</label>
+                            {{ sale_form.customer_phone }}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ sale_form.payment_method.id_for_label }}" class="form-label">Payment Method</label>
+                            {{ sale_form.payment_method }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-7">
+                <!-- Formset -->
+                <div class="card shadow">
+                    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                        <h6 class="m-0 font-weight-bold text-primary">Sale Items</h6>
+                        <button type="button" class="btn btn-sm btn-success add-row">
+                            <i class="fas fa-plus"></i> Add Item
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        {{ formset.management_form }}
+                        <div id="formset-container">
+                            {% for form in formset %}
+                                <div class="formset-row">
+                                    {{ form.id }}
+                                    <div class="row mb-3">
+                                        <div class="col-md-8">
+                                            <label for="{{ form.drug.id_for_label }}" class="form-label">Drug</label>
+                                            {{ form.drug }}
+                                            {% if form.drug.errors %}
+                                                <div class="invalid-feedback d-block">{{ form.drug.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="{{ form.quantity.id_for_label }}" class="form-label">Quantity</label>
+                                            {{ form.quantity }}
+                                            {% if form.quantity.errors %}
+                                                <div class="invalid-feedback d-block">{{ form.quantity.errors }}</div>
+                                            {% endif %}
+                                            <!-- Stock info will be inserted here by JavaScript -->
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <label class="form-label">Unit Price</label>
+                                            <div class="form-control-plaintext item-price">$0.00</div>
+                                            <input type="hidden" name="{{ form.prefix }}-unit_price" id="id_{{ form.prefix }}-unit_price" value="0.00">
+                                        </div>
+                                        <div class="col-md-8 text-end">
+                                            <div class="d-flex align-items-center justify-content-end">
+                                                <div class="me-3">
+                                                    <strong>Line Total: </strong>
+                                                    <span class="item-total">$0.00</span>
+                                                </div>
+                                                <button type="button" class="btn btn-sm btn-outline-danger delete-row">
+                                                    <i class="fas fa-trash"></i> Remove
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="text-end border-top mt-3 pt-3">
+                            <div class="row justify-content-end">
+                                <div class="col-md-8">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h5 class="mb-0">Grand Total:</h5>
+                                        <h5 class="mb-0" id="grand-total">$0.00</h5>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save"></i> Complete Sale
+                        </button>
+                        <a href="{% url 'transaction_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const formsetPrefix = '{{ formset.prefix }}';
+    const totalForms = $('#id_' + formsetPrefix + '-TOTAL_FORMS');
+    const initialForms = $('#id_' + formsetPrefix + '-INITIAL_FORMS');
+    const maxForms = $('#id_' + formsetPrefix + '-MAX_NUM_FORMS');
+    
+    // Function to get drug details from API
+    function updateDrugDetails(drugId, row) {
+        if (!drugId) return;
+        
+        console.log("Fetching details for drug ID:", drugId);
+        
+        $.ajax({
+            url: `/inventory/api/drug/${drugId}/`,
+            type: 'GET',
+            dataType: 'json',
+            success: function(data) {
+                console.log("Drug details retrieved:", data);
+                
+                // Update price display and hidden field
+                row.find('.item-price').text('$' + parseFloat(data.selling_price).toFixed(2));
+                row.find('input[name$="unit_price"]').val(data.selling_price);
+                
+                // Show stock information
+                const stockInfoElem = row.find('.stock-info');
+                if (stockInfoElem.length === 0) {
+                    row.find('.form-label:contains("Quantity")').after(
+                        '<div class="stock-info text-muted small">In stock: ' + data.quantity_in_stock + '</div>'
+                    );
+                } else {
+                    stockInfoElem.text('In stock: ' + data.quantity_in_stock);
+                }
+                
+                // Calculate the row total
+                calculateRowTotal(row);
+            },
+            error: function(error) {
+                console.error('Error fetching drug data:', error);
+                alert('Unable to fetch drug price information. Please check if the API is configured correctly.');
+            }
+        });
+    }
+    
+    // Add row
+    $('.add-row').click(function() {
+        const formCount = parseInt(totalForms.val());
+        const row = $('.formset-row:first').clone(true);
+        
+        // Clear the values
+        row.find('input, select').each(function() {
+            const name = $(this).attr('name').replace('-0-', '-' + formCount + '-');
+            const id = 'id_' + name;
+            
+            $(this).attr({'name': name, 'id': id}).val('').removeAttr('checked');
+        });
+        
+        // Update form count
+        totalForms.val(formCount + 1);
+        
+        // Add the new row
+        $('#formset-container').append(row);
+        
+        // Reset item price and total display
+        row.find('.item-price').text('$0.00');
+        row.find('.item-total').text('$0.00');
+        
+        // Remove any previous stock info or validation messages
+        row.find('.stock-info, .quantity-error').remove();
+        row.find('.is-invalid').removeClass('is-invalid');
+        
+        // Reinitialize select2 for drug search
+        initializeDrugSelect(row.find('select[name$="drug"]'));
+    });
+    
+    // Delete row
+    $('.delete-row').click(function() {
+        const formCount = parseInt(totalForms.val());
+        
+        if (formCount > 1) {
+            $(this).closest('.formset-row').remove();
+            totalForms.val(formCount - 1);
+            updateTotals();
+        }
+    });
+    
+    // Initialize drug select with search functionality
+    function initializeDrugSelect(selectElement) {
+        // If select2 is available
+        if ($.fn.select2) {
+            $(selectElement).select2({
+                placeholder: 'Search for a drug...',
+                allowClear: true,
+                width: '100%',
+                ajax: {
+                    url: '/inventory/api/drugs/search/',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function(params) {
+                        return {
+                            term: params.term || ''
+                        };
+                    },
+                    processResults: function(data) {
+                        return {
+                            results: data.results
+                        };
+                    },
+                    cache: true
+                },
+                templateResult: formatDrugResult,
+                templateSelection: formatDrugSelection
+            }).on('select2:select', function(e) {
+                const drugId = $(this).val();
+                const row = $(this).closest('.formset-row');
+                
+                // Get full drug details and update the price
+                updateDrugDetails(drugId, row);
+                
+                // If the search API already provided price and stock, use it temporarily
+                // until the full details are loaded
+                if (e.params.data.selling_price) {
+                    row.find('.item-price').text('$' + parseFloat(e.params.data.selling_price).toFixed(2));
+                    row.find('input[name$="unit_price"]').val(e.params.data.selling_price);
+                    
+                    if (e.params.data.stock !== undefined) {
+                        const stockInfoElem = row.find('.stock-info');
+                        if (stockInfoElem.length === 0) {
+                            row.find('.form-label:contains("Quantity")').after(
+                                '<div class="stock-info text-muted small">In stock: ' + e.params.data.stock + '</div>'
+                            );
+                        } else {
+                            stockInfoElem.text('In stock: ' + e.params.data.stock);
+                        }
+                    }
+                    
+                    calculateRowTotal(row);
+                }
+            });
+        }
+    }
+    
+    // Format drug results in the dropdown
+    function formatDrugResult(drug) {
+        if (!drug.id) return drug.text;
+        
+        let markup = `<div class="drug-result">
+            <div class="drug-name">${drug.text}</div>`;
+        
+        if (drug.stock !== undefined) {
+            markup += `<div class="drug-details">
+                <span class="price">$${parseFloat(drug.selling_price).toFixed(2)}</span> | 
+                <span class="stock ${drug.stock < 5 ? 'text-danger' : ''}">
+                    Stock: ${drug.stock}
+                </span>
+            </div>`;
+        }
+        
+        markup += `</div>`;
+        
+        return $(markup);
+    }
+    
+    // Format the selected drug display
+    function formatDrugSelection(drug) {
+        return drug.text || drug.id;
+    }
+    
+    // Add validation for quantity based on available stock
+    $(document).on('input', '.formset-row input[name$="quantity"]', function() {
+        const row = $(this).closest('.formset-row');
+        const quantityInput = $(this);
+        const quantityVal = parseInt(quantityInput.val()) || 0;
+        const drugSelect = row.find('select[name$="drug"]');
+        
+        // Only validate if a drug is selected
+        if (drugSelect.val()) {
+            // Get the current available stock
+            let stockText = row.find('.stock-info').text();
+            let availableStock = parseInt(stockText.replace('In stock: ', '')) || 0;
+            
+            // Validate quantity
+            if (quantityVal > availableStock) {
+                quantityInput.addClass('is-invalid');
+                
+                // Add error message if it doesn't exist
+                if (row.find('.quantity-error').length === 0) {
+                    quantityInput.after(`<div class="invalid-feedback quantity-error">
+                        Cannot exceed available stock (${availableStock})
+                    </div>`);
+                }
+            } else {
+                quantityInput.removeClass('is-invalid');
+                row.find('.quantity-error').remove();
+            }
+        }
+        
+        calculateRowTotal(row);
+    });
+    
+    // Calculate row totals
+    function calculateRowTotal(row) {
+        const quantity = parseFloat(row.find('input[name$="quantity"]').val()) || 0;
+        const unitPrice = parseFloat(row.find('input[name$="unit_price"]').val()) || 0;
+        
+        const total = quantity * unitPrice;
+        row.find('.item-total').text('$' + total.toFixed(2));
+        
+        updateTotals();
+    }
+    
+    // Update all totals
+    function updateTotals() {
+        let grandTotal = 0;
+        
+        $('.formset-row').each(function() {
+            const row = $(this);
+            const quantity = parseFloat(row.find('input[name$="quantity"]').val()) || 0;
+            const unitPrice = parseFloat(row.find('input[name$="unit_price"]').val()) || 0;
+            
+            grandTotal += (quantity * unitPrice);
+        });
+        
+        $('#grand-total').text('$' + grandTotal.toFixed(2));
+    }
+    
+    // Form validation before submit
+    $('#sale-form').on('submit', function(e) {
+        let hasErrors = false;
+        
+        $('.formset-row').each(function() {
+            const row = $(this);
+            const quantityInput = row.find('input[name$="quantity"]');
+            const drugSelect = row.find('select[name$="drug"]');
+            
+            // Skip empty rows
+            if (!drugSelect.val()) {
+                return;
+            }
+            
+            // Validate quantity
+            const quantityVal = parseInt(quantityInput.val()) || 0;
+            if (quantityVal <= 0) {
+                quantityInput.addClass('is-invalid');
+                if (row.find('.quantity-error').length === 0) {
+                    quantityInput.after('<div class="invalid-feedback quantity-error">Quantity must be greater than 0</div>');
+                }
+                hasErrors = true;
+            }
+        });
+        
+        if (hasErrors) {
+            e.preventDefault();
+            alert('Please fix the highlighted errors before submitting.');
+        }
+    });
+    
+    // Initialize everything on page load
+    $(document).ready(function() {
+        // Initialize all drug selects with select2
+        $('select[name$="drug"]').each(function() {
+            initializeDrugSelect($(this));
+        });
+        
+        // Initialize totals on page load
+        $('.formset-row').each(function() {
+            const row = $(this);
+            calculateRowTotal(row);
+        });
+
+        // If there are preselected drugs, fetch their prices
+        $('.formset-row').each(function() {
+            const row = $(this);
+            const drugSelect = row.find('select[name$="drug"]');
+            const drugId = drugSelect.val();
+            
+            if (drugId) {
+                updateDrugDetails(drugId, row);
+            }
+        });
+    });
+</script>
+{% endblock %}

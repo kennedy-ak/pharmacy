@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Pharmacy Management System{% endblock %}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
+    
+    <!-- Custom styles -->
+    <style>
+        body {
+            background-color: #f8f9fc;
+        }
+        
+        .bg-login-image {
+            background: url('https://source.unsplash.com/K4mSJ7kc0As/600x800');
+            background-position: center;
+            background-size: cover;
+        }
+        
+        .bg-register-image {
+            background: url('https://source.unsplash.com/Mv9hjnEUHR4/600x800');
+            background-position: center;
+            background-size: cover;
+        }
+        
+        .bg-password-image {
+            background: url('https://source.unsplash.com/oWTW-jNGl9I/600x800');
+            background-position: center;
+            background-size: cover;
+        }
+        
+        form.user .form-control-user {
+            font-size: 0.8rem;
+            border-radius: 10rem;
+            padding: 1.5rem 1rem;
+        }
+        
+        form.user .btn-user {
+            font-size: 0.8rem;
+            border-radius: 10rem;
+            padding: 0.75rem 1rem;
+        }
+        
+        .btn-block {
+            display: block;
+            width: 100%;
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center mt-3">
+            <div class="col-auto">
+                <h2 class="text-center text-primary">
+                    <i class="fas fa-pills me-2"></i> Pharmacy Management System
+                </h2>
+            </div>
+        </div>
+    </div>
+    
+    {% block content %}{% endblock %}
+    
+    <!-- Bootstrap JS with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

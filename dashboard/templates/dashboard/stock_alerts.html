@@ -1,0 +1,234 @@
+{% extends 'base.html' %}
+
+{% block title %}Stock Alerts - Pharmacy Management System{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'dashboard_home' %}">Dashboard</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Stock Alerts</li>
+        </ol>
+    </nav>
+    
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2">Stock Alerts</h1>
+        <div>
+            <a href="{% url 'purchase_create' %}" class="btn btn-primary">
+                <i class="fas fa-cart-plus"></i> New Purchase
+            </a>
+            <a href="{% url 'adjustment_create' %}" class="btn btn-warning">
+                <i class="fas fa-edit"></i> Inventory Adjustment
+            </a>
+        </div>
+    </div>
+    
+    <!-- Alert Summary -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card border-left-danger shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                Low Stock Items</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ low_stock_count }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-arrow-down fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Expiring Soon</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ expiring_count }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clock fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Active Alerts Table -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold text-primary">Active Alerts</h6>
+            <span class="badge bg-primary">{{ alerts.count }} alerts</span>
+        </div>
+        <div class="card-body">
+            {% if alerts %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Drug</th>
+                                <th>Type</th>
+                                <th>Message</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for alert in alerts %}
+                                <tr>
+                                    <td>{{ alert.drug_name }}</td>
+                                    <td>
+                                        {% if alert.alert_type == 'low_stock' %}
+                                            <span class="badge bg-danger">Low Stock</span>
+                                        {% elif alert.alert_type == 'expiry' %}
+                                            <span class="badge bg-warning">Expiry</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">{{ alert.alert_type|title }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ alert.message }}</td>
+                                    <td>{{ alert.created_at|date:"M d, Y H:i" }}</td>
+                                    <td>
+                                        <div class="btn-group">
+                                            {% if alert.alert_type == 'low_stock' %}
+                                                <a href="{% url 'purchase_create' %}" class="btn btn-sm btn-primary" title="Purchase">
+                                                    <i class="fas fa-cart-plus"></i>
+                                                </a>
+                                            {% elif alert.alert_type == 'expiry' %}
+                                                <a href="{% url 'adjustment_create' %}" class="btn btn-sm btn-warning" title="Adjust">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                            {% endif %}
+                                            <a href="{% url 'resolve_alert' alert.pk %}" class="btn btn-sm btn-success" title="Mark as Resolved">
+                                                <i class="fas fa-check"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle me-2"></i>
+                    No active alerts at the moment. Your inventory looks good!
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Detailed Alert Sections -->
+    <div class="row">
+        <!-- Low Stock Drugs -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3 bg-danger text-white">
+                    <h6 class="m-0 font-weight-bold">Low Stock Drugs</h6>
+                </div>
+                <div class="card-body">
+                    {% if low_stock_count %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Drug Name</th>
+                                        <th>Current Stock</th>
+                                        <th>Reorder Level</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for drug in low_stock_drugs %}
+                                        <tr>
+                                            <td>
+                                                <a href="{% url 'drug_detail' drug.pk %}" class="text-decoration-none">
+                                                    {{ drug.name }}
+                                                </a>
+                                            </td>
+                                            <td class="fw-bold text-danger">{{ drug.quantity_in_stock }}</td>
+                                            <td>{{ drug.reorder_level }}</td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <a href="{% url 'purchase_create' %}?drug={{ drug.pk }}" class="btn btn-sm btn-primary">
+                                                        <i class="fas fa-cart-plus"></i> Purchase
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-success mb-0">
+                            <i class="fas fa-check-circle me-2"></i>
+                            No low stock items found.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Expiring Drugs -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3 bg-warning text-dark">
+                    <h6 class="m-0 font-weight-bold">Drugs Expiring Soon</h6>
+                </div>
+                <div class="card-body">
+                    {% if expiring_count %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Drug Name</th>
+                                        <th>Expiry Date</th>
+                                        <th>Days Left</th>
+                                        <th>Quantity</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for drug in expiring_drugs %}
+                                        <tr>
+                                            <td>
+                                                <a href="{% url 'drug_detail' drug.pk %}" class="text-decoration-none">
+                                                    {{ drug.name }}
+                                                </a>
+                                            </td>
+                                            <td>{{ drug.expiry_date }}</td>
+                                            <td class="fw-bold text-warning">
+                                                {{ drug.expiry_date|timeuntil }}
+                                            </td>
+                                            <td>{{ drug.quantity_in_stock }}</td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <a href="{% url 'adjustment_create' %}?drug={{ drug.pk }}" class="btn btn-sm btn-warning">
+                                                        <i class="fas fa-edit"></i> Adjust
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-success mb-0">
+                            <i class="fas fa-check-circle me-2"></i>
+                            No drugs expiring soon.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - Pharmacy Management System{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'inventory_home' %}">Inventory</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'drug_list' %}">Drugs</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'drug_detail' drug.pk %}">{{ drug.name }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Add Batch</li>
+        </ol>
+    </nav>
+    
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2">{{ title }}</h1>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Batch Information</h6>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        {% if form.errors %}
+                            <div class="alert alert-danger">
+                                <strong>Error:</strong> Please correct the errors below.
+                            </div>
+                        {% endif %}
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.batch_number.id_for_label }}" class="form-label">Batch Number</label>
+                                {{ form.batch_number }}
+                                {% if form.batch_number.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.batch_number.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.quantity.id_for_label }}" class="form-label">Quantity</label>
+                                {{ form.quantity }}
+                                {% if form.quantity.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.quantity.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.date_received.id_for_label }}" class="form-label">Date Received</label>
+                                {{ form.date_received }}
+                                {% if form.date_received.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.date_received.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.expiry_date.id_for_label }}" class="form-label">Expiry Date</label>
+                                {{ form.expiry_date }}
+                                {% if form.expiry_date.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.expiry_date.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-end mt-4">
+                            <a href="{% url 'drug_detail' drug.pk %}" class="btn btn-secondary me-2">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Save Batch
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Drug Information</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-2">
+                        <div class="col-5 text-muted">Drug Name:</div>
+                        <div class="col-7 fw-bold">{{ drug.name }}</div>
+                    </div>
+                    {% if drug.generic_name %}
+                    <div class="row mb-2">
+                        <div class="col-5 text-muted">Generic Name:</div>
+                        <div class="col-7">{{ drug.generic_name }}</div>
+                    </div>
+                    {% endif %}
+                    <div class="row mb-2">
+                        <div class="col-5 text-muted">Category:</div>
+                        <div class="col-7">{{ drug.category.name|default:"Not categorized" }}</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-5 text-muted">Current Stock:</div>
+                        <div class="col-7">{{ drug.quantity_in_stock }}</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-5 text-muted">Unit Price:</div>
+                        <div class="col-7">${{ drug.unit_price|floatformat:2 }}</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-5 text-muted">Selling Price:</div>
+                        <div class="col-7">${{ drug.selling_price|floatformat:2 }}</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Information</h6>
+                </div>
+                <div class="card-body">
+                    <p><i class="fas fa-info-circle text-info me-2"></i> Adding a batch will increase the drug's stock level by the specified quantity.</p>
+                    
+                    <div class="alert alert-warning mt-3">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Make sure to enter the correct expiry date to enable proper tracking of expiring medications.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

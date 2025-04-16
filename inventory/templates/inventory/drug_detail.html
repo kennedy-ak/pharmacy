@@ -1,0 +1,196 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ drug.name }} - Pharmacy Management System{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'inventory_home' %}">Inventory</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'drug_list' %}">Drugs</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ drug.name }}</li>
+        </ol>
+    </nav>
+    
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2">{{ drug.name }}</h1>
+        <div>
+            <a href="{% url 'drug_update' drug.pk %}" class="btn btn-primary">
+                <i class="fas fa-edit"></i> Edit Drug
+            </a>
+            <a href="{% url 'batch_create' drug.pk %}" class="btn btn-success">
+                <i class="fas fa-plus"></i> Add Batch
+            </a>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-6">
+            <!-- Drug Details Card -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Drug Details</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-2">
+                        <div class="col-5 col-md-4 text-muted">Generic Name:</div>
+                        <div class="col-7 col-md-8">{{ drug.generic_name|default:"N/A" }}</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-5 col-md-4 text-muted">Category:</div>
+                        <div class="col-7 col-md-8">
+                            {% if drug.category %}
+                                {{ drug.category.name }}
+                            {% else %}
+                                <span class="text-muted">Not categorized</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-5 col-md-4 text-muted">Supplier:</div>
+                        <div class="col-7 col-md-8">
+                            {% if drug.supplier %}
+                                {{ drug.supplier.name }}
+                            {% else %}
+                                <span class="text-muted">No supplier</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-5 col-md-4 text-muted">Description:</div>
+                        <div class="col-7 col-md-8">{{ drug.description|default:"No description"|linebreaks }}</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Stock Information Card -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Stock Information</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row align-items-center mb-3">
+                        <div class="col-6">
+                            <div class="font-weight-bold">Current Stock</div>
+                            <div class="h3">{{ drug.quantity_in_stock }}</div>
+                        </div>
+                        <div class="col-6 text-end">
+                            <div class="font-weight-bold">Reorder Level</div>
+                            <div class="h3">{{ drug.reorder_level }}</div>
+                        </div>
+                    </div>
+                    
+                    {% if drug.is_low_stock %}
+                        <div class="alert alert-danger mb-3">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Current stock is below reorder level.
+                        </div>
+                    {% endif %}
+                    
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="font-weight-bold">Expiry Date</div>
+                            <div>
+                                {% if drug.expiry_date %}
+                                    {{ drug.expiry_date }}
+                                    {% if drug.is_expired %}
+                                        <span class="badge bg-danger ms-2">Expired</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="text-muted">Not specified</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-6 text-end">
+                            <div class="font-weight-bold">Added On</div>
+                            <div>{{ drug.created_at|date:"M d, Y" }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <!-- Pricing Information Card -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-success">Pricing Information</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row align-items-center mb-3">
+                        <div class="col-6">
+                            <div class="text-muted">Unit Price</div>
+                            <div class="h3">${{ drug.unit_price|floatformat:2 }}</div>
+                        </div>
+                        <div class="col-6 text-end">
+                            <div class="text-muted">Selling Price</div>
+                            <div class="h3">${{ drug.selling_price|floatformat:2 }}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Selling price is calculated as unit price + 30% markup.
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Batches Card -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">Batches</h6>
+                    <a href="{% url 'batch_create' drug.pk %}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-plus"></i> Add Batch
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if batches %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Batch #</th>
+                                        <th>Quantity</th>
+                                        <th>Expiry Date</th>
+                                        <th>Received On</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for batch in batches %}
+                                        <tr>
+                                            <td>{{ batch.batch_number }}</td>
+                                            <td>{{ batch.quantity }}</td>
+                                            <td>{{ batch.expiry_date }}</td>
+                                            <td>{{ batch.date_received }}</td>
+                                            <td>
+                                                {% if batch.is_expired %}
+                                                    <span class="badge bg-danger">Expired</span>
+                                                {% else %}
+                                                    <span class="badge bg-success">Active</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% empty %}
+                                        <tr>
+                                            <td colspan="5" class="text-center py-3">No batches added yet.</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-center text-muted my-4">
+                            No batches have been added for this drug yet.
+                            <br><br>
+                            <a href="{% url 'batch_create' drug.pk %}" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Add First Batch
+                            </a>
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

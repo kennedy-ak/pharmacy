@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+
+{% block title %}Confirm Delete - Pharmacy Management System{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'transaction_list' %}">Transactions</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'transaction_detail' transaction.pk %}">{{ transaction.reference_number }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Confirm Delete</li>
+        </ol>
+    </nav>
+    
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-danger">Delete Transaction</h6>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-danger mb-4">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Warning:</strong> This action cannot be undone. Deleting this transaction will affect inventory levels.
+                    </div>
+                    
+                    <p>Are you sure you want to delete the following transaction?</p>
+                    
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="row mb-2">
+                                <div class="col-md-4 text-muted">Reference Number:</div>
+                                <div class="col-md-8 fw-bold">{{ transaction.reference_number }}</div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-md-4 text-muted">Transaction Type:</div>
+                                <div class="col-md-8">
+                                    {% if transaction.transaction_type == 'sale' %}
+                                        <span class="badge bg-success">Sale</span>
+                                    {% elif transaction.transaction_type == 'purchase' %}
+                                        <span class="badge bg-primary">Purchase</span>
+                                    {% elif transaction.transaction_type == 'return' %}
+                                        <span class="badge bg-warning">Return</span>
+                                    {% elif transaction.transaction_type == 'adjustment' %}
+                                        <span class="badge bg-secondary">Adjustment</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-md-4 text-muted">Date & Time:</div>
+                                <div class="col-md-8">{{ transaction.transaction_date|date:"M d, Y H:i" }}</div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-4 text-muted">Total Amount:</div>
+                                <div class="col-md-8 fw-bold">${{ transaction.total_amount|floatformat:2 }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <strong>Consequences of deletion:</strong>
+                            <ul>
+                                {% if transaction.transaction_type == 'purchase' %}
+                                    <li>Inventory will be reduced by the purchased quantities</li>
+                                    <li>Purchase record and all its items will be permanently removed</li>
+                                {% elif transaction.transaction_type == 'sale' %}
+                                    <li>Inventory will be increased by the sold quantities</li>
+                                    <li>Sale record and all its items will be permanently removed</li>
+                                {% elif transaction.transaction_type == 'return' %}
+                                    <li>Inventory will be adjusted to reverse the return</li>
+                                    <li>Return record and all its items will be permanently removed</li>
+                                {% elif transaction.transaction_type == 'adjustment' %}
+                                    <li>Inventory will be adjusted to reverse the adjustment</li>
+                                    <li>Adjustment record and all its items will be permanently removed</li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-end">
+                            <a href="{% url 'transaction_detail' transaction.pk %}" class="btn btn-secondary me-2">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash"></i> Delete Transaction
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

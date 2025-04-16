@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - Pharmacy Management System{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'inventory_home' %}">Inventory</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'drug_list' %}">Drugs</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ title }}</li>
+        </ol>
+    </nav>
+    
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2">{{ title }}</h1>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Drug Information</h6>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        {% if form.errors %}
+                            <div class="alert alert-danger">
+                                <strong>Error:</strong> Please correct the errors below.
+                            </div>
+                        {% endif %}
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.name.id_for_label }}" class="form-label">Drug Name</label>
+                                {{ form.name }}
+                                {% if form.name.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.name.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.generic_name.id_for_label }}" class="form-label">Generic Name</label>
+                                {{ form.generic_name }}
+                                {% if form.generic_name.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.generic_name.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.category.id_for_label }}" class="form-label">Category</label>
+                                {{ form.category }}
+                                {% if form.category.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.category.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.supplier.id_for_label }}" class="form-label">Supplier</label>
+                                {{ form.supplier }}
+                                {% if form.supplier.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.supplier.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.description.id_for_label }}" class="form-label">Description</label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                                <div class="invalid-feedback d-block">{{ form.description.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <hr>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.unit_price.id_for_label }}" class="form-label">Unit Price</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    {{ form.unit_price }}
+                                </div>
+                                {% if form.unit_price.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.unit_price.errors }}</div>
+                                {% else %}
+                                    <div class="form-text">
+                                        <small class="text-muted">Selling price will be unit price + 30%</small>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Selling Price</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="text" class="form-control" id="selling_price_display" readonly>
+                                </div>
+                                <div class="form-text">
+                                    <small class="text-muted">Calculated automatically</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="{{ form.quantity_in_stock.id_for_label }}" class="form-label">Initial Stock</label>
+                                {{ form.quantity_in_stock }}
+                                {% if form.quantity_in_stock.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.quantity_in_stock.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4">
+                                <label for="{{ form.reorder_level.id_for_label }}" class="form-label">Reorder Level</label>
+                                {{ form.reorder_level }}
+                                {% if form.reorder_level.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.reorder_level.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4">
+                                <label for="{{ form.expiry_date.id_for_label }}" class="form-label">Expiry Date</label>
+                                {{ form.expiry_date }}
+                                {% if form.expiry_date.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.expiry_date.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-end mt-4">
+                            <a href="{% url 'drug_list' %}" class="btn btn-secondary me-2">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Save Drug
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Information</h6>
+                </div>
+                <div class="card-body">
+                    <p><i class="fas fa-info-circle text-info me-2"></i> Fill in all the details to add a new drug to your inventory.</p>
+                    
+                    <h6 class="mt-4 mb-2 font-weight-bold">Things to note:</h6>
+                    <ul class="small">
+                        <li>Unit price is what you pay to acquire the drug.</li>
+                        <li>Selling price will be calculated automatically (unit price + 30%).</li>
+                        <li>Reorder level is used to generate alerts when stock is low.</li>
+                        <li>Expiry date is used to track drugs nearing expiration.</li>
+                    </ul>
+                    
+                    <div class="alert alert-warning mt-3">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Initial stock:</strong> If you're adding a new drug for the first time, enter the current quantity you have in stock. For future stock additions, use the batch functionality.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Dynamic calculation of selling price
+    document.addEventListener('DOMContentLoaded', function() {
+        const unitPriceInput = document.getElementById('{{ form.unit_price.id_for_label }}');
+        const sellingPriceDisplay = document.getElementById('selling_price_display');
+        
+        function updateSellingPrice() {
+            const unitPrice = parseFloat(unitPriceInput.value) || 0;
+            const sellingPrice = unitPrice * 1.3; // 30% markup
+            sellingPriceDisplay.value = sellingPrice.toFixed(2);
+        }
+        
+        unitPriceInput.addEventListener('input', updateSellingPrice);
+        
+        // Initialize on page load
+        updateSellingPrice();
+    });
+</script>
+{% endblock %}

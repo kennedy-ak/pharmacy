@@ -1,0 +1,245 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - Pharmacy Management System{% endblock %}
+
+{% block extra_css %}
+<style>
+    .formset-row {
+        border-bottom: 1px solid #eee;
+        padding: 15px 0;
+    }
+    .formset-row:last-child {
+        border-bottom: none;
+    }
+    .delete-row {
+        color: #dc3545;
+        cursor: pointer;
+    }
+    .add-row {
+        cursor: pointer;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'transaction_list' %}">Transactions</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Inventory Adjustment</li>
+        </ol>
+    </nav>
+    
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2">{{ title }}</h1>
+    </div>
+    
+    <form method="post" id="adjustment-form">
+        {% csrf_token %}
+        
+        <div class="row">
+            <div class="col-md-5">
+                <!-- Transaction Form -->
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">Adjustment Details</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="{{ transaction_form.transaction_type.id_for_label }}" class="form-label">Transaction Type</label>
+                                {{ transaction_form.transaction_type }}
+                            </div>
+                    </div>
+                    <div class="card-footer">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Process Adjustment
+                        </button>
+                        <a href="{% url 'transaction_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const formsetPrefix = '{{ formset.prefix }}';
+    const totalForms = $('#id_' + formsetPrefix + '-TOTAL_FORMS');
+    const initialForms = $('#id_' + formsetPrefix + '-INITIAL_FORMS');
+    const maxForms = $('#id_' + formsetPrefix + '-MAX_NUM_FORMS');
+    
+    // Add row
+    $('.add-row').click(function() {
+        const formCount = parseInt(totalForms.val());
+        const row = $('.formset-row:first').clone(true);
+        
+        // Clear the values
+        row.find('input, select').each(function() {
+            const name = $(this).attr('name').replace('-0-', '-' + formCount + '-');
+            const id = 'id_' + name;
+            
+            $(this).attr({'name': name, 'id': id}).val('').removeAttr('checked');
+        });
+        
+        // Update form count
+        totalForms.val(formCount + 1);
+        
+        // Add the new row
+        $('#formset-container').append(row);
+        
+        // Reinitialize select2 if used
+        if ($.fn.select2) {
+            row.find('select').select2();
+        }
+    });
+    
+    // Delete row
+    $('.delete-row').click(function() {
+        const formCount = parseInt(totalForms.val());
+        
+        if (formCount > 1) {
+            $(this).closest('.formset-row').remove();
+            totalForms.val(formCount - 1);
+        }
+    });
+    
+    // Load drug info when drug is selected
+    $(document).on('change', '.formset-row select[name$="drug"]', function() {
+        const drugId = $(this).val();
+        const row = $(this).closest('.formset-row');
+        
+        if (drugId) {
+            $.ajax({
+                url: `/inventory/api/drug/${drugId}/`,
+                type: 'GET',
+                dataType: 'json',
+                success: function(data) {
+                    row.find('input[name$="unit_price"]').val(data.unit_price);
+                    row.find('.current-stock').text(data.quantity_in_stock);
+                    // Pre-fill the quantity field with current stock
+                    row.find('input[name$="quantity"]').val(data.quantity_in_stock);
+                },
+                error: function(error) {
+                    console.error('Error fetching drug data:', error);
+                }
+            });
+        } else {
+            row.find('.current-stock').text('0');
+            row.find('input[name$="quantity"]').val('');
+        }
+    });
+    
+    // Highlight difference between current stock and new quantity
+    $(document).on('input', '.formset-row input[name$="quantity"]', function() {
+        const row = $(this).closest('.formset-row');
+        const currentStock = parseInt(row.find('.current-stock').text()) || 0;
+        const newQuantity = parseInt($(this).val()) || 0;
+        
+        const stockElement = row.find('.drug-current-stock');
+        
+        if (newQuantity > currentStock) {
+            // Increasing stock
+            stockElement.removeClass('bg-light bg-danger').addClass('bg-success');
+            stockElement.html(`<small class="text-white">Current: ${currentStock} <i class="fas fa-arrow-right mx-1"></i> New: ${newQuantity} <span class="badge bg-light text-success">+${newQuantity - currentStock}</span></small>`);
+        } else if (newQuantity < currentStock) {
+            // Decreasing stock
+            stockElement.removeClass('bg-light bg-success').addClass('bg-danger');
+            stockElement.html(`<small class="text-white">Current: ${currentStock} <i class="fas fa-arrow-right mx-1"></i> New: ${newQuantity} <span class="badge bg-light text-danger">-${currentStock - newQuantity}</span></small>`);
+        } else {
+            // No change
+            stockElement.removeClass('bg-success bg-danger').addClass('bg-light');
+            stockElement.html(`<small class="text-muted">Current Stock: <span class="current-stock">${currentStock}</span> (No Change)</small>`);
+        }
+    });
+    
+    // Initialize on page load
+    $(document).ready(function() {
+        $('.formset-row select[name$="drug"]').each(function() {
+            const drugId = $(this).val();
+            if (drugId) {
+                $(this).trigger('change');
+            }
+        });
+    });
+</script>
+{% endblock %}
+                            <div class="col-md-8">
+                                <label for="{{ transaction_form.transaction_date.id_for_label }}" class="form-label">Adjustment Date</label>
+                                {{ transaction_form.transaction_date }}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ transaction_form.notes.id_for_label }}" class="form-label">Adjustment Reason / Notes</label>
+                            {{ transaction_form.notes }}
+                        </div>
+                        
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>Important:</strong> For an adjustment, the quantity represents the new total quantity in stock, not the amount to add or subtract.
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-7">
+                <!-- Formset -->
+                <div class="card shadow">
+                    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                        <h6 class="m-0 font-weight-bold text-primary">Adjustment Items</h6>
+                        <button type="button" class="btn btn-sm btn-success add-row">
+                            <i class="fas fa-plus"></i> Add Item
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        {{ formset.management_form }}
+                        <div id="formset-container">
+                            {% for form in formset %}
+                                <div class="formset-row">
+                                    {{ form.id }}
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <label for="{{ form.drug.id_for_label }}" class="form-label">Drug</label>
+                                            {{ form.drug }}
+                                            {% if form.drug.errors %}
+                                                <div class="invalid-feedback d-block">{{ form.drug.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label for="{{ form.quantity.id_for_label }}" class="form-label">New Quantity</label>
+                                            {{ form.quantity }}
+                                            {% if form.quantity.errors %}
+                                                <div class="invalid-feedback d-block">{{ form.quantity.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label for="{{ form.unit_price.id_for_label }}" class="form-label">Unit Price</label>
+                                            {{ form.unit_price }}
+                                            {% if form.unit_price.errors %}
+                                                <div class="invalid-feedback d-block">{{ form.unit_price.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="drug-current-stock bg-light p-2 rounded text-center">
+                                                <small class="text-muted">Current Stock: <span class="current-stock">0</span></small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 text-end">
+                                            <div class="d-flex align-items-center justify-content-end">
+                                                <button type="button" class="btn btn-sm btn-outline-danger delete-row">
+                                                    <i class="fas fa-trash"></i> Remove
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>

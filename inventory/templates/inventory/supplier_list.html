@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block title %}Suppliers - Pharmacy Management System{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2">Suppliers</h1>
+        <a href="{% url 'supplier_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Add New Supplier
+        </a>
+    </div>
+    
+    <div class="card shadow">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold text-primary">All Suppliers</h6>
+            <span class="badge bg-primary">{{ suppliers|length }} suppliers</span>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Name</th>
+                            <th>Contact Person</th>
+                            <th>Phone</th>
+                            <th>Email</th>
+                            <th>Drugs Count</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for supplier in suppliers %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>{{ supplier.name }}</td>
+                                <td>{{ supplier.contact_person|default:"N/A" }}</td>
+                                <td>{{ supplier.phone|default:"N/A" }}</td>
+                                <td>{{ supplier.email|default:"N/A" }}</td>
+                                <td>{{ supplier.drugs.count }}</td>
+                                <td>
+                                    <div class="btn-group">
+                                        <a href="{% url 'drug_list' %}?supplier={{ supplier.id }}" class="btn btn-sm btn-info" title="View Drugs">
+                                            <i class="fas fa-pills"></i>
+                                        </a>
+                                        <a href="#" class="btn btn-sm btn-primary" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'purchase_create' %}" class="btn btn-sm btn-success" title="New Purchase">
+                                            <i class="fas fa-cart-plus"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center py-4">
+                                    <p class="text-muted mb-2">No suppliers found</p>
+                                    <a href="{% url 'supplier_create' %}" class="btn btn-primary btn-sm">
+                                        Add your first supplier
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
